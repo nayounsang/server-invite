@@ -13,6 +13,6 @@
     }
   ],
   "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "startCommand": "npm run start"
+  "installCommand": "npm install",
+  "outputDirectory": "dist"
 }
