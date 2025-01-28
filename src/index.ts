@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { ChannelType, Client, GatewayIntentBits } from "discord.js";
+import { ChannelType, Client, GatewayIntentBits, Guild } from "discord.js";
 import express, { Request, Response } from "express";
 
 dotenv.config();
@@ -24,11 +24,14 @@ client.login(DISCORD_TOKEN);
 app.get("/", async (req: Request, res: Response) => {
   try {
     const guild = await client.guilds.fetch(GUILD_ID);
-    const channel = guild?.channels?.cache?.find(
-      (ch) => ch.type === ChannelType.GuildText
-    );
+    if (!guild) {
+      res.status(404).send("Guild not found.");
+    }
 
+    const channel = await getChannel(guild);
     if (!channel) {
+      console.log(await guild.channels.fetch());
+      console.log(guild.channels.cache);
       res.status(404).send("Channel not found.");
       return;
     }
@@ -51,6 +54,25 @@ app.get("/", async (req: Request, res: Response) => {
   }
 });
 
+const getChannel = async (guild: Guild) => {
+  const cachedChannel = guild.channels?.cache?.find(
+    (ch) => ch.type === ChannelType.GuildText
+  );
+  if (cachedChannel) {
+    return cachedChannel;
+  }
+  return guild.channels
+    .fetch()
+    .then((channels) => {
+      return channels.find((ch) => ch?.type === ChannelType.GuildText);
+    })
+    .catch((e) => {
+      throw new Error(e);
+    });
+};
+
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+module.exports = app;
